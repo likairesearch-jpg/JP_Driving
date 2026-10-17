@@ -1,0 +1,24 @@
+const {chromium}=require(process.env.PLAYWRIGHT_PATH||'C:/Users/dante/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {pathToFileURL}=require('node:url');
+const out=path.join(__dirname,'test-results'),report={started:new Date().toISOString(),checks:[],audio:[]};
+(async()=>{let browser;try{
+ browser=await chromium.launch({channel:'msedge',headless:true});const context=await browser.newContext();const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));await context.setOffline(true);
+ await page.goto(pathToFileURL(path.join(__dirname,'index.html')).href);
+ assert.equal(await page.locator('#translation').isVisible(),false);await page.keyboard.press('t');assert.equal(await page.locator('#translation').isVisible(),true);assert.match(await page.locator('#translation').textContent(),/准备过街/);assert.equal(await page.locator('#feedback').textContent(),'');assert.equal(await page.locator('.choice.selected').count(),0);report.checks.push('PASS: T shows pre-answer Chinese without revealing answer or selecting');
+ await page.keyboard.press('d');assert.match(await page.locator('#translation').textContent(),/鸣笛/);await page.locator('[data-jump="27"]').click();const translation=await page.locator('#translation').textContent();for(const token of ['人行横道','1.','2.','3.'])assert.ok(translation.includes(token));report.checks.push('PASS: Translation follows navigation and includes scene plus all statements');
+ await page.reload();assert.equal(await page.locator('#translation').isVisible(),true);await page.locator('#chinese').click();assert.equal(await page.locator('#translation').isVisible(),false);report.checks.push('PASS: Chinese setting persists and button toggles off');
+ await page.evaluate(()=>{const old=JSON.parse(localStorage.getItem('michishirube.v1'));delete old.zh;old.stats.q01={attempts:2,errors:1,lastCorrect:true,lastTime:new Date().toISOString(),reason:'rule'};localStorage.setItem('michishirube.v1',JSON.stringify(old));});await page.reload();assert.equal(await page.locator('#translation').isVisible(),false);assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('michishirube.v1')).stats.q01.attempts),2);report.checks.push('PASS: Existing v1 progress migrates with Chinese default off');
+ for(let i=1;i<=40;i++){
+  const id=`q${String(i).padStart(2,'0')}`;const encoded=fs.readFileSync(path.join(__dirname,'audio',id+'.wav')).toString('base64');
+  const decoded=await page.evaluate(async base64=>{const ac=new AudioContext();try{const bytes=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));const b=await ac.decodeAudioData(bytes.buffer);const a=b.getChannelData(0);let energy=0,peak=0;for(const n of a){energy+=n*n;peak=Math.max(peak,Math.abs(n));}return {duration:b.duration,rms:Math.sqrt(energy/a.length),peak};}finally{await ac.close();}},encoded);
+  assert.ok(decoded.duration>2&&decoded.rms>.001);report.audio.push({id,...decoded});
+ }
+ report.checks.push('PASS: All 40 WAV files decode in Edge and contain non-silent audio');
+ await page.locator('[data-jump="0"]').click();await page.locator('#speak').click();await page.waitForFunction(()=>!lessonAudio.paused&&lessonAudio.currentTime>.15);assert.match(await page.locator('#voiceStatus').textContent(),/正在朗读/);report.checks.push('PASS: Real file audio playback advances while network is offline');
+ await page.locator('#slow').click();await page.waitForFunction(()=>!lessonAudio.paused&&lessonAudio.currentTime>.1);assert.equal(await page.evaluate(()=>lessonAudio.playbackRate),.75);report.checks.push('PASS: Slow playback uses rate 0.75');
+ await page.locator('#stopAudio').click();assert.equal(await page.evaluate(()=>lessonAudio.paused),true);await page.locator('#prompt').click();await page.keyboard.press('r');await page.waitForFunction(()=>!lessonAudio.paused);await page.keyboard.press('d');assert.equal(await page.evaluate(()=>lessonAudio.paused),true);report.checks.push('PASS: R plays; Stop and question navigation stop audio');
+ await page.keyboard.press('t');await page.keyboard.press('f');await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await page.screenshot({path:path.join(out,'update-mobile.png'),fullPage:true});report.checks.push('PASS: Chinese + furigana controls fit 390px viewport');
+ assert.deepEqual(errors,[]);report.checks.push('PASS: No browser runtime errors');report.passed=report.checks.length;report.failed=0;
+ }catch(e){report.failed=1;report.failure=e.stack;process.exitCode=1;}finally{if(browser)await browser.close();report.finished=new Date().toISOString();fs.writeFileSync(path.join(out,'update-report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({...report,audio:report.audio.length+' decoded files'},null,2));}})();
+

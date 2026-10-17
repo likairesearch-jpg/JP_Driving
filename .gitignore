@@ -1,0 +1,5 @@
+.tools/
+test-results/
+node_modules/
+*.zip
+.env*
