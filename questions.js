@@ -75,4 +75,8 @@ const pictureRows=[
  ['yellow','signs','{図|ず}の{黄色|きいろ}い{中央線|ちゅうおうせん}を{右側|みぎがわ}にはみ{出|だ}して、{前|まえ}の{車|くるま}を{追|お}い{越|こ}してよい。',false,'可以越过图中黄色中央线驶向右侧，超越前车。','黄色中央线禁止为了超车而越线驶入右侧部分。它不等同于禁止所有不越线的超车；仍须遵守其他限制。','はみ出す：越出；追い越す：超车。','双向道路中央为黄色实线，左侧车道有两辆朝上的车辆。']
 ];
 pictureRows.forEach((r,i)=>QUESTIONS.push({id:`q${31+i}`,type:'picture',picture:r[0],imageDescription:r[7],sourceKey:r[1],sourceType:'原创标志／标线模拟题（依据官方规则）',prompt:r[2],statements:[st(r[2],r[3],r[4],r[5],r[6])]}));
-if (typeof module !== 'undefined') module.exports={QUESTIONS,SOURCES};
+const CATEGORIES={all:'全部考点',rules:'交通规则',signs:'路标',markings:'路面标示',hazards:'危险预测'};
+QUESTIONS.forEach((q,i)=>{q.category=q.type==='scene'?'hazards':i>=36?'markings':i>=30?'signs':'rules';});
+if(typeof module!=='undefined')require('./questions-expanded.js')(QUESTIONS,SOURCES,st);
+else expandQuestions(QUESTIONS,SOURCES,st);
+if (typeof module !== 'undefined') module.exports={QUESTIONS,SOURCES,CATEGORIES};

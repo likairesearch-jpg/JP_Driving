@@ -7,17 +7,17 @@ const playwright=require(process.env.PLAYWRIGHT_PATH||'C:/Users/dante/.cache/cod
 const output=path.join(__dirname,'test-results');fs.mkdirSync(output,{recursive:true});
 const report={started:new Date().toISOString(),platform:process.platform,checks:[],errors:[]};
 const check=(name,fn)=>{fn();report.checks.push({name,result:'PASS'});};
-const expected=[true,false,true,false,false,true,false,true,true,false,true,true,false,true,false,true,true,false,true,true,false,true,false,true,true,false,true,[true,false,true],[false,true,false],[true,true,false],true,false,false,true,true,false,true,true,false,false];
+const expected=require('./expected-answers.cjs');
 (async()=>{
  let browser;
  try{
- check('40 items: 27 text + 3 groups + 10 pictures',()=>{assert.equal(QUESTIONS.length,40);assert.equal(QUESTIONS.filter(q=>q.type==='text').length,27);assert.equal(QUESTIONS.filter(q=>q.type==='scene').length,3);});
+ check('100 items: 67 text + 9 groups + 24 pictures',()=>{assert.equal(QUESTIONS.length,100);assert.equal(QUESTIONS.filter(q=>q.type==='text').length,67);assert.equal(QUESTIONS.filter(q=>q.type==='scene').length,9);});
  check('Independent answer manifest, source and furigana completeness',()=>{QUESTIONS.forEach((q,i)=>{assert.deepEqual(q.statements.map(v=>v.answer),Array.isArray(expected[i])?expected[i]:[expected[i]]);assert.ok(SOURCES[q.sourceKey]);for(const v of [q.prompt,...q.statements.map(s=>s.text)]){const remaining=v.replace(/\{[^|{}]+\|[ぁ-ゖー]+\}/g,'');assert.ok(!/[一-龯{}]/.test(remaining),v);}q.statements.forEach(s=>{assert.ok(s.translation&&s.explanation&&s.language);});});});
  browser=await playwright.chromium.launch({channel:'msedge',headless:true});report.browser=browser.version();
  const context=await browser.newContext({viewport:{width:1365,height:1000}});let page=await context.newPage();
  page.on('pageerror',err=>report.errors.push(err.message));page.on('dialog',d=>d.accept());
  const url=pathToFileURL(path.join(__dirname,'index.html')).href;
- await page.goto(url);await page.waitForFunction(()=>document.querySelectorAll('#questionMap button').length===40);
+ await page.goto(url);await page.waitForFunction(()=>document.querySelectorAll('#questionMap button').length===100);
  check('Direct file URL loads without runtime errors',()=>assert.equal(report.errors.length,0));
  check('Furigana hidden by default',()=>assert.equal(fs.existsSync(path.join(__dirname,'index.html')),true));
  assert.equal(await page.locator('rt').first().isVisible(),false);
@@ -39,8 +39,8 @@ const expected=[true,false,true,false,false,true,false,true,true,false,true,true
   for(let j=0;j<answers.length;j++){if(j)await page.keyboard.press('ArrowDown');await page.keyboard.press(answers[j]?'1':'2');}
   await page.keyboard.press('Space');assert.match(await page.locator('#feedback').textContent(),/回答正确/,`q${i+1}`);
  }
- assert.equal(await page.locator('#progress').textContent(),'40 / 40');assert.match(await page.locator('#accuracy').textContent(),/100%/);check('All 40 independent expected answers grade correctly via keyboard',()=>{});
- await page.locator('#confirm').click();assert.match(await page.locator('#notice').textContent(),/答对 40/);check('Final item summary has no out-of-range navigation',()=>{});
+ assert.equal(await page.locator('#progress').textContent(),'100 / 100');assert.match(await page.locator('#accuracy').textContent(),/100%/);check('All 100 independent expected answers grade correctly via keyboard',()=>{});
+ await page.locator('#confirm').click();assert.match(await page.locator('#notice').textContent(),/答对 100/);check('Final item summary has no out-of-range navigation',()=>{});
  const downloadPromise=page.waitForEvent('download');await page.locator('#export').click();const download=await downloadPromise;await download.saveAs(path.join(output,'export.json'));const exported=JSON.parse(fs.readFileSync(path.join(output,'export.json'),'utf8'));assert.equal(exported.stats.q28.lastCorrect,true);check('JSON export contains actual history',()=>{});
  await page.locator('#import').setInputFiles({name:'invalid.json',mimeType:'application/json',buffer:Buffer.from('{"version":99}')});await page.waitForFunction(()=>document.querySelector('#storageStatus').textContent.includes('导入失败'));assert.equal((await saved()).stats.q28.lastCorrect,true);check('Invalid import leaves current data unchanged',()=>{});
  await page.locator('#reset').click();assert.equal(Object.keys((await saved()).stats).length,0);await page.locator('#import').setInputFiles(path.join(output,'export.json'));await page.waitForFunction(()=>document.querySelector('#storageStatus').textContent.includes('导入成功'));assert.equal((await saved()).stats.q28.lastCorrect,true);check('Reset and valid import restore saved history',()=>{});
@@ -57,4 +57,3 @@ const expected=[true,false,true,false,false,true,false,true,true,false,true,true
  await context.close();
  }catch(err){report.failure=err.stack;console.error(err.stack);process.exitCode=1;}finally{if(browser)await browser.close();report.finished=new Date().toISOString();report.passed=report.checks.length;report.failed=report.failure?1:0;fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));}
 })();
-
