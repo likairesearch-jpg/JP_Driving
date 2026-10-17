@@ -114,3 +114,11 @@ Windows Edge 155.0.4283.45；实际file URL，独立测试浏览器配置。
 - 首次沙箱内Edge启动因Windows进程/配置权限失败；经工具批准在沙箱外使用独立测试浏览器后通过。未改变用户浏览器设置。
 - 用户明确授权新建公开仓库。仓库名JP_Driving；公开应用与源码，学习记录只保存在浏览器。使用GitHub Pages，无付费API，无需安装程序。离线版可下载仓库ZIP解压打开。
 - 本地文件与HTTPS网站不同源，已有记录需要导出/导入；README已说明。开发总耗时未精确计时；测试有真实时间戳。
+
+### 发布验收
+
+- 已创建公开仓库 https://github.com/likairesearch-jpg/JP_Driving 并推送main。GitHub Pages源设为main根目录，HTTPS强制启用。
+- https://likairesearch-jpg.github.io/JP_Driving/ 已实际返回HTTP200；真实Edge打开显示40题。
+- 2026-10-17 18:54:44–18:54:49 JST对线上HTTPS站点运行test-pictures.cjs：5项通过，0失败，含10道新题逐题音频播放、翻译、假名、键盘、错题本和重载。加本地45项，共50次检查通过。
+- 在线报告test-results/live-report.json，发布截图test-results/live-site.png；测试产物不进入公开仓库。GitHub构建状态API当时仍返回queued，但实际HTTPS访问和线上功能测试已成功，以真实站点测试为验收依据。
+- 未制作安装程序；公开网页直接使用，仓库ZIP解压后可离线打开index.html。

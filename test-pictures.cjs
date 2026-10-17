@@ -32,4 +32,5 @@ const report={started:new Date().toISOString(),checks:[],errors:[]};
  await page.screenshot({path:path.join(__dirname,'test-results','picture-mobile.png'),fullPage:true});
  report.checks.push('PASS: Picture and translation fit 390px mobile width');
  assert.deepEqual(report.errors,[]);report.checks.push('PASS: No runtime errors');report.failed=0;
- }catch(e){report.failed=1;report.failure=e.stack;process.exitCode=1;}finally{if(browser)await browser.close();report.finished=new Date().toISOString();report.passed=report.checks.length;fs.writeFileSync(path.join(__dirname,'test-results','pictures-report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));}})();
+ }catch(e){report.failed=1;report.failure=e.stack;process.exitCode=1;}finally{if(browser)await browser.close();report.finished=new Date().toISOString();report.passed=report.checks.length;fs.writeFileSync(path.join(__dirname,'test-results',process.env.TEST_URL?'live-report.json':'pictures-report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));}})();
+
