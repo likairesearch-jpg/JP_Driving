@@ -148,3 +148,10 @@ Windows Edge 155.0.4283.45；实际file URL，独立测试浏览器配置。
 - test-categories.cjs：10项通过，分类数量、共享记录、局部重练、空分类、旧版迁移、无效分类拒绝、全部60新题实际朗读/键盘判定、三条场景评分、390px布局及零运行错误。
 - 合计50项通过，0失败；运行时间19:45:43–19:46:15 JST。截图categories-mobile.png和new-diagrams.png已查看；14张新标志标线及6场景均可见，移动端无水平溢出。
 - 用沙箱外获准的Edge运行测试；未更改系统设置。开发总时间未精确计时。未对物理扬声器或合成日语自然度做主观听审。
+
+### 线上发布验收
+
+- 已推送版本335aeb1至现有公开仓库main。GitHub Pages刷新后实际HTTP200，并出现questions-expanded.js及100题分类界面。
+- 对https://likairesearch-jpg.github.io/JP_Driving/运行完整test-categories.cjs：2026-10-17 19:48:51–19:49:21 JST，10项通过，0失败；全部60个新增题的真实线上WAV播放、键盘评分及分类存储测试通过。
+- 本轮合计本地50项＋线上10项＝60项通过。在线报告为test-results/categories-live-report.json，截图为categories-desktop.png、categories-mobile.png、new-diagrams.png；均不上传学习测试记录。
+- 首次部署检查仍返回旧版40题页面，等待Pages更新后再验收，未将推送成功等同于部署成功。应用文件与线上验收版本一致；最终追加此日志作为记录提交。
